@@ -25,10 +25,10 @@ def main():
         print(TAB_1 + 'Destination: {}, Source: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))  
 
         if eth_proto == 8:
-            ipv4 = IPv4(data)
+            (version, header_length, ttl, proto, src, target, data) = ipv4_packet(data)
             print(TAB_1 + 'IPv4 Packet:')
             print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(version, header_length, ttl))
-            print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(proto, src,target))
+            print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(proto, src, target))
 
             if proto == 17:
                src_port, dest_port, size, data = udp_packet(data)
