@@ -22,7 +22,7 @@ def main():
         raw_data, addr = conn.recvfrom(65536)
         dest_mac, src_mac, eth_proto, data = ethernet_frame(raw_data)
         print('\nEthernet Frame:')
-        print('Destination: {}, Source: {}, ipv4 source {}, ipv4 dest {}, Protocol: {}'.format(dest_mac, src_mac,ipv4(src), ipv4(target), eth_proto))  
+        print('Destination: {}, Source: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))  
 
         if eth.proto == 8:
             ipv4 = IPv4(eth.data)
