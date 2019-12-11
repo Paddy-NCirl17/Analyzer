@@ -21,28 +21,24 @@ def main():
     HOST = '192.168.28.20'  #eth0 address
     PORT = 65432
     s = socket.socket(socket.AF_PACKET, socket.SOCK_STREAM, socket.ntohs(3))
-        s.bind((HOST, PORT))
-        s.listen()
-        conn, addr = s.accept()
-        
-        with conn:
+    s.connect((HOST, PORT)      
     
-            while True:
-                data = conn.recv(1024)
-                dest_mac, src_mac, eth_proto, data = ethernet_frame(raw_data)
-                print('\nEthernet Frame:')
-                print(TAB_1 + 'Destination: {}, Source: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))  
+    while True:
+        data = s.recv(1024)
+        dest_mac, src_mac, eth_proto, data = ethernet_frame(raw_data)
+        print('\nEthernet Frame:')
+        print(TAB_1 + 'Destination: {}, Source: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))  
 
-                if eth_proto == 8:
-                    version, header_length, ttl, proto, src, target, data = ipv4_packet(data)
-                    print(TAB_1 + 'IPv4 Packet:')
-                    print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(version, header_length, ttl))
-                    print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(proto, src, target))
+        if eth_proto == 8:
+            version, header_length, ttl, proto, src, target, data = ipv4_packet(data)
+            print(TAB_1 + 'IPv4 Packet:')
+            print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(version, header_length, ttl))
+            print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(proto, src, target))
 
-                    if proto == 17:
-                       src_port, dest_port, size, data = udp_packet(data)
-                       print(TAB_1 + 'UDP Packet:')
-                       print(TAB_2 + 'Source Port: {}, Destination Port: {}, Size: {}'.format(src_port, dest_port, size))
+            if proto == 17:
+               src_port, dest_port, size, data = udp_packet(data)
+               print(TAB_1 + 'UDP Packet:')
+               print(TAB_2 + 'Source Port: {}, Destination Port: {}, Size: {}'.format(src_port, dest_port, size))
 
 #Unpack the ethernet frame
 def ethernet_frame(data):
