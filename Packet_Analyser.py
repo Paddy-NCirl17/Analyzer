@@ -18,13 +18,12 @@ DATA_TAB_4 = '\t\t\t\t   '
 
 
 def main():
-    HOST = '192.168.28.20'  #eth0 address
-    PORT = 65432
-    s = socket.socket(socket.AF_PACKET, socket.SOCK_STREAM, socket.ntohs(3))
-    s.connect((HOST, PORT)      
+    udp = socket.getprotobyname("udp")
+    conn = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, udp, socket.ntohs(3))
     
     while True:
-        data = s.recv(1024)
+        raw_data, addr = conn.recvfrom(65536)
+        dest_mac, src_mac, eth_proto, data = ethernet_frame(raw_data)
         dest_mac, src_mac, eth_proto, data = ethernet_frame(raw_data)
         print('\nEthernet Frame:')
         print(TAB_1 + 'Destination: {}, Source: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))  
