@@ -19,7 +19,7 @@ def main():
     IP = '192.168.28.5'
     PORT = 5005
     conn = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
-    conn.bind(IP, PORT)
+    conn.connect(IP, PORT)
     conn.listen(1)
     conn, addr = s.accept()
     
