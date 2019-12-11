@@ -20,7 +20,7 @@ DATA_TAB_4 = '\t\t\t\t   '
 def main():
     HOST = '192.168.28.20'  #eth0 address
     PORT = 65432
-    with socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3)) as s:
+    s = socket.socket(socket.AF_PACKET, socket.SOCK_STREAM, socket.ntohs(3))
         s.bind((HOST, PORT))
         s.listen()
         conn, addr = s.accept()
