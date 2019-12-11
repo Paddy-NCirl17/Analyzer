@@ -19,21 +19,21 @@ def main():
     conn = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
     
     while True:
-        raw_data, addr = conn.recvfrom(65536)
+        raw_data, addr = conn.recvfrom(65535)
         dest_mac, src_mac, eth_proto, data = ethernet_frame(raw_data)
         print('\nEthernet Frame:')
-        print('Destination: {}, Source: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))  
+        print(TAB_1 + 'Destination: {}, Source: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))  
 
-        if eth.proto == 8:
-            ipv4 = IPv4(eth.data)
+        if eth_proto == 8:
+            ipv4 = IPv4(data)
             print(TAB_1 + 'IPv4 Packet:')
-            print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(ipv4.version, ipv4.header_length, ipv4.ttl))
-            print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(ipv4.proto, ipv4.src, ipv4.target))
+            print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(version, header_length, ttl))
+            print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(proto, src,target))
 
-            if ipv4.proto == 17:
-               udp = UDP(ipv4.data)
-               print(TAB_1 + 'UDP Segment:')
-               print(TAB_2 + 'Source Port: {}, Destination Port: {}, Length: {}'.format(udp.src_port, udp.dest_port, udp.size))
+            if proto == 17:
+               src_port, dest_port, size, data = udp_packet(data)
+               print(TAB_1 + 'UDP Packet:')
+               print(TAB_2 + 'Source Port: {}, Destination Port: {}, Size: {}'.format(src_port, dest_port, size))
 
 #Unpack the ethernet frame
 def ethernet_frame(data):
