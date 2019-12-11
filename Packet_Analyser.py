@@ -25,7 +25,7 @@ def main():
         print(TAB_1 + 'Destination: {}, Source: {}, Protocol: {}'.format(dest_mac, src_mac, eth_proto))  
 
         if eth_proto == 8:
-            (version, header_length, ttl, proto, src, target, data) = ipv4_packet(data)
+            version, header_length, ttl, proto, src, target, data = ipv4_packet(data)
             print(TAB_1 + 'IPv4 Packet:')
             print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(version, header_length, ttl))
             print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(proto, src, target))
@@ -38,7 +38,7 @@ def main():
 #Unpack the ethernet frame
 def ethernet_frame(data):
         dest_mac,src_mac, proto = struct.unpack('! 6s 6s H',data[:14])
-        return get_mac_addr(dest_mac),get_mac_addr(src_mac), socket.htons(proto), data[:14]
+        return get_mac_addr(dest_mac),get_mac_addr(src_mac), socket.htons(proto), data[14:]
  
  # formatting the MAC Address to AA:BB:CC:DD:EE:FF   
 def get_mac_addr(bytes_addr):   
@@ -58,7 +58,7 @@ def ipv4(addr):
     
 def udp_packet(data):
     src_port, dest_port, size = struct.unpack('! H H 2x H', data[:8])
-    return src_port, dest_port, size, data[:8]
+    return src_port, dest_port, size, data[8:]
  
  
 def format_multi_line(prefix, string, size=80):
