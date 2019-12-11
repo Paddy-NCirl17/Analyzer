@@ -16,7 +16,7 @@ DATA_TAB_4 = '\t\t\t\t   '
 # Reference: https://youtu.be/_HIefrog_eg
 
 def main():
-    IP = '192.168.28.5'
+    IP = '192.168.28.20'
     PORT = 5005
     conn = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
     conn.bind((IP, PORT))
