@@ -3,6 +3,18 @@ import struct
 import textwrap
 import os
 
+TAB_1 = '\t - '
+TAB_2 = '\t\t - '
+TAB_3 = '\t\t\t - '
+TAB_4 = '\t\t\t\t - '
+
+DATA_TAB_1 = '\t   '
+DATA_TAB_2 = '\t\t   '
+DATA_TAB_3 = '\t\t\t   '
+DATA_TAB_4 = '\t\t\t\t   '
+
+# Reference: https://youtu.be/_HIefrog_eg
+
 def main():
     conn = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
     
@@ -10,7 +22,18 @@ def main():
         raw_data, addr = conn.recvfrom(65536)
         dest_mac, src_mac, eth_proto, data = ethernet_frame(raw_data)
         print('\nEthernet Frame:')
-        print('Destination: {}, Source: {}, ipv4 source {}, ipv4 dest {} Protocol: {}'.format(dest_mac, src_mac,ipv4(src), ipv4(target), eth_proto))  
+        print('Destination: {}, Source: {}, ipv4 source {}, ipv4 dest {}, Protocol: {}'.format(dest_mac, src_mac,ipv4(src), ipv4(target), eth_proto))  
+
+        if eth.proto == 8:
+            ipv4 = IPv4(eth.data)
+            print(TAB_1 + 'IPv4 Packet:')
+            print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(ipv4.version, ipv4.header_length, ipv4.ttl))
+            print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(ipv4.proto, ipv4.src, ipv4.target))
+
+            if ipv4.proto == 17:
+               udp = UDP(ipv4.data)
+               print(TAB_1 + 'UDP Segment:')
+               print(TAB_2 + 'Source Port: {}, Destination Port: {}, Length: {}'.format(udp.src_port, udp.dest_port, udp.size))
 
 #Unpack the ethernet frame
 def ethernet_frame(data):
@@ -32,5 +55,18 @@ def ipv4_packet(data):
 
 def ipv4(addr):
     return '.'.join(map(str,addr))
+    
+def udp_packet(data):
+    src_port, dest_port, size = struct.unpack('! H H 2x H', data[:8])
+    return src_port, dest_port, size, data[:8]
+ 
+ 
+def format_multi_line(prefix, string, size=80):
+    size -= len(prefix)
+    if isinstance(string, bytes):
+        string = ''.join(r'\x{:02x}'.format(byte) for byte in string)
+        if size % 2:
+            size -= 1
+    return '\n'.join([prefix + line for line in textwrap.wrap(string, size)])   
     
 main()        
