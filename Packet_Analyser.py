@@ -40,11 +40,12 @@ def main():
                src_port, dest_port, size, control_field, data = udp_packet(data)
                print(TAB_1 + 'UDP Packet:')
                print(TAB_2 + 'Source Port: {}, Destination Port: {}, Size: {}, Control Field: {}'.format(src_port, dest_port, size, control_field))
-               
+
                if control_field == 11000000:
-		  stream_id, seq_no, inet_length, ptp_time, data = inetx_packet(data)
-                  print(TAB_1 + 'iNET-X Packet:')
-		  print(TAB_2 + 'Stream ID: {}, Sequence No: {}, iNET-X Length: {}, PTP TimeStamp: {}'.format(stream_id, seq_no, inet_length, ptp_time))
+                   stream_id, seq_no, inet_length, ptp_time, data = inetx_packet(data)
+                   print(TAB_1 + 'iNET-X Packet:')
+                   print(TAB_2 + 'Stream ID: {}, Sequence No: {}, iNET-X Length: {}, PTP TimeStamp: {}'.format(stream_id, seq_no, inet_length, ptp_time))
+
 	 
 #Unpack the ethernet frame
 def ethernet_frame(data):
