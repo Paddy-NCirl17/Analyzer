@@ -2,6 +2,8 @@ import socket
 import struct
 import textwrap
 import os
+from datetime import datetime
+import time
 
 TAB_1 = '\t - '
 TAB_2 = '\t\t - '
@@ -41,7 +43,7 @@ def main():
                print(TAB_1 + 'UDP Packet:')
                print(TAB_2 + 'Source Port: {}, Destination Port: {}, Size: {}, Control Field: {}'.format(src_port, dest_port, size, control_field))
 
-               if control_field == 11000000:
+               if control_field == '11000000':
                    stream_id, seq_no, inet_length, ptp_time, data = inetx_packet(data)
                    print(TAB_1 + 'iNET-X Packet:')
                    print(TAB_2 + 'Stream ID: {}, Sequence No: {}, iNET-X Length: {}, PTP TimeStamp: {}'.format(stream_id, seq_no, inet_length, ptp_time))
@@ -77,9 +79,13 @@ def inet(addr):
     return ''.join(str)
 
 def inetx_packet(data):
-    stream_id, seq_no, inet_length, ptp_time = struct.unpack('! 4s 4s 4s 8s', data[:20])
-    return stream_id, seq_no,inet_length, ptp_time , data[20:]    
-    	
+    stream_id, seq_no, inet_length, ptp_time = struct.unpack('! 4s l 4s Q', data[:20])
+    return stream_id, seq_no,inet_length, ptp(ptp_time), data[20:]    
+    
+def ptp(ptp_time):
+    dt = datetime.fromtimestamp(ptp_time/1000000000)
+    return dt.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime(dt))
+	
 def format_multi_line(prefix, string, size=80):
     size -= len(prefix)
     if isinstance(string, bytes):
