@@ -15,9 +15,6 @@ DATA_TAB_2 = '\t\t   '
 DATA_TAB_3 = '\t\t\t   '
 DATA_TAB_4 = '\t\t\t\t   '
 
-# Reference: https://youtu.be/_HIefrog_eg
-
-
 
 def main():
    # RASP_IP = "192.168.0.10"
@@ -39,19 +36,19 @@ def main():
             print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(proto, src, target))
 
             if proto == 17:
-               src_port, dest_port, size, control_field, data = udp_packet(data)
+               src_port, dest_port, size, control_field,udp_data = udp_packet(data)
                print(TAB_1 + 'UDP Packet:')
                print(TAB_2 + 'Source Port: {}, Destination Port: {}, Size: {}, Control Field: {}'.format(src_port, dest_port, size, control_field))
 
                if control_field == '11000000':
-                   stream_id, seq_no, inet_length, ptp_time, data = inetx_packet(data)
+                   stream_id, seq_no, inet_length, ptp_time, data = inetx_packet(udp_data)
                    print(TAB_1 + 'iNET-X Packet:')
                    print(TAB_2 + 'Stream ID: {}, Sequence No: {}, iNET-X Length: {}, PTP TimeStamp: {}'.format(stream_id, seq_no, inet_length, ptp_time ))
 
                elif control_field != '11000000':
-                     key,data = iena_packet(data)
+                     key, size, timestamp, seq, data= iena_packet(data)
                      print(TAB_1 + 'IENA Packet:')
-                     print(TAB_2 + 'IENA Key: {}'.format(key))
+                     print(TAB_2 + 'IENA Key: {},Size: {}, Sequence No: {},Time: {} '.format(key, size, seq, timestamp))
 	 
 #Unpack the ethernet frame
 def ethernet_frame(data):
@@ -86,9 +83,9 @@ def inetx_packet(data):
     stream_id, seq_no, inet_length, ptp_time  = struct.unpack('! 4s l 4s Q', data[:20])
     return inet(stream_id), seq_no,inet(inet_length),ptp(ptp_time), data[20:]
 
-def iena_packet(data):
-    key = struct.unpack('!h', data[:2])
-    return key, data[2:]	     
+def iena_packet(udp_data):
+    key, size, timestamp, seq = struct.unpack('! 8x 2s 2s Q h', udp_data[:22])
+    return inet(key), inet(size), unix(timestamp), seq, udp_data[22:]	     
     
 def ptp(ptp_time):
     seconds = (ptp_time >> 32)
@@ -97,6 +94,14 @@ def ptp(ptp_time):
     nano_format = ('{:09d}'.format(nano_seconds))
     ptp_time_conv = ptp_time_hr+'.'+nano_format
     return ptp_time_conv
+
+def unix(timestamp):
+    seconds = (timestamp >> 32)
+    micro_seconds = (timestamp & 0xffff)
+    time_hr = time.strftime("%a, %d %b %Y %H:%M:%S",time.localtime(seconds))
+    micro_format = ('{:04d}'.format(micro_seconds))
+    time_conv = time_hr+'.'+ micro_format
+    return time_conv
 
 def format_multi_line(prefix, string, size=80):
     size -= len(prefix)
