@@ -46,8 +46,12 @@ def main():
                if control_field == '11000000':
                    stream_id, seq_no, inet_length, ptp_time, data = inetx_packet(data)
                    print(TAB_1 + 'iNET-X Packet:')
-                   print(TAB_2 + 'Stream ID: {}, Sequence No: {}, iNET-X Length: {}, PTP TimeStamp: {}'.format(stream_id, seq_no, inet_length, ptp_time))
+                   print(TAB_2 + 'Stream ID: {}, Sequence No: {}, iNET-X Length: {}, PTP TimeStamp: {}'.format(stream_id, seq_no, inet_length, ptp_time ))
 
+               elif control_field != '11000000':
+                     key,data = iena_packet(data)
+                     print(TAB_1 + 'IENA Packet:')
+                     print(TAB_2 + 'IENA Key: {}'.format(key))
 	 
 #Unpack the ethernet frame
 def ethernet_frame(data):
@@ -79,13 +83,21 @@ def inet(addr):
     return ''.join(str)
 
 def inetx_packet(data):
-    stream_id, seq_no, inet_length, ptp_time = struct.unpack('! 4s l 4s Q', data[:20])
-    return stream_id, seq_no,inet_length, ptp(ptp_time), data[20:]    
+    stream_id, seq_no, inet_length, ptp_time  = struct.unpack('! 4s l 4s Q', data[:20])
+    return inet(stream_id), seq_no,inet(inet_length),ptp(ptp_time), data[20:]
+
+def iena_packet(data):
+    key = struct.unpack('!h', data[:2])
+    return key, data[2:]	     
     
 def ptp(ptp_time):
-    dt = datetime.fromtimestamp(ptp_time/1000000000)
-    return dt.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime(dt))
-	
+    seconds = (ptp_time >> 32)
+    nano_seconds = (ptp_time & 0xffffffff)
+    ptp_time_hr = time.strftime("%a, %d %b %Y %H:%M:%S",time.localtime(seconds))
+    nano_format = ('{:09d}'.format(nano_seconds))
+    ptp_time_conv = ptp_time_hr+'.'+nano_format
+    return ptp_time_conv
+
 def format_multi_line(prefix, string, size=80):
     size -= len(prefix)
     if isinstance(string, bytes):
@@ -94,4 +106,4 @@ def format_multi_line(prefix, string, size=80):
             size -= 1
     return '\n'.join([prefix + line for line in textwrap.wrap(string, size)])   
     
-main()        
+main()
