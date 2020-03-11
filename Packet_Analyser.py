@@ -86,7 +86,7 @@ def main():
                 ip_header.unpack(raw_data[14:])
                 print(TAB_1 + 'IPv4 Packet:')
                 print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(ip_header.version, ip_header.ihl, ip_header.ttl))
-                print(TAB_2 + 'Protocol: {}, Source: {}, Target: {}'.format(ip_header.protocol, ip_header.srcip, ip_header.dstip))
+                print(TAB_2 + 'Protocol: {}, Source: {}, Destination: {}'.format(ip_header.protocol, ip_header.srcip, ip_header.dstip))
 
                 if ip_header.protocol == 17:
                    udp_header = udp.UDP()
