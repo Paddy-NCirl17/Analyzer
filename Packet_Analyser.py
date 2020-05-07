@@ -1,10 +1,16 @@
+#!usr/bin/python3
+
 import socket
 import struct
 import textwrap
 import platform
 import os
+import sys
+import json
+import paho.mqtt.client as mqtt
 from datetime import datetime
 import time
+import math
 #import queue from Queue
 import Ethernet as ethernet
 import IP as ip
@@ -12,58 +18,56 @@ import UDP as udp
 import INETX as inetx
 import IENA as iena
 
-TAB_1 = '\t - '
-TAB_2 = '\t\t - '
-TAB_3 = '\t\t\t - '
-TAB_4 = '\t\t\t\t - '
 
-DATA_TAB_1 = '\t   '
-DATA_TAB_2 = '\t\t   '
-DATA_TAB_3 = '\t\t\t   '
-DATA_TAB_4 = '\t\t\t\t   '
- 
- # formatting the MAC Address to AA:BB:CC:DD:EE:FF   
+broker_address="broker.mqttdashboard.com"
+client = mqtt.Client("PADDY-IOT")
+client.connect(broker_address)
+
+ # formatting the MAC Address to AA:BB:CC:DD:EE:FF, for debug only 
 def get_mac_addr(bytes_addr):   
         bytes_str = map('{:02x}'.format, bytes_addr)
         return':'.join(bytes_str).upper()
 
+## Covert to Hexadecimal##
 def hexConvert(addr):
     str = map('{:02x}'.format,addr)
-    return ''.join(str)	     
+    return ''.join(str)
     
+##convert IP addresses to readable format    
+def ipv4(addr):
+    return '.'.join(map(str,addr))        	     
+
+##Convert PTPtime to readable format##    
 def ptp(ptptime):
     seconds = (ptptime >> 32)
     nano_seconds = (ptptime & 0xffffffff)
     ptptime_hr = time.strftime("%a, %d %b %Y %H:%M:%S",time.localtime(seconds))
-    nano_format = ('{:09d}'.format(nano_seconds))
-    ptptime_conv = ptptime_hr+'.'+nano_format
-    return ptptime_conv
+    return ptptime_hr
 
-def unix(timestamp):
-    seconds = (timestamp >> 32)
-    micro_seconds = (timestamp & 0xffff)
-    time_hr = time.strftime("%a, %d %b %Y %H:%M:%S",time.localtime(seconds))
-    micro_format = ('{:04d}'.format(micro_seconds))
-    time_conv = time_hr+'.'+ micro_format
-    return time_conv
-
-def format_multi_line(prefix, string, size=80):
-    size -= len(prefix)
-    if isinstance(string, bytes):
-        string = ''.join(r'\x{:02x}'.format(byte) for byte in string)
-        if size % 2:
-            size -= 1
-    return '\n'.join([prefix + line for line in textwrap.wrap(string, size)]) 
-        
+##Convert UnixTime to readable format##
+def unix(timeHi, timeLo):
+    startOfYear = datetime(datetime.today().year, 1,1,0,0,0,0)
+    micro_seconds = timeLo +timeHi * 2**32
+    doy = int(micro_seconds/1e6 + time.mktime(startOfYear.timetuple()))
+    timestamp = time.strftime("%a, %d %b %Y %H:%M:%S",time.localtime(doy))
+    return timestamp    
+                    
 
 def main():
    # RASP_IP = "192.168.0.10"
     #RASP_PORT = 5005
+    totalbytes = 0
+    timestamp = time.time()
+    totaltime= 0
+    totalrcvs = 0
+    INETX = False
+
     operating_system = platform.system()
     print (operating_system)
     HOST = socket.gethostbyname(socket.gethostname())
     print (HOST)
     
+##socket for windows skips the Ethernet layer.   
     if operating_system == 'Windows':
         conn = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
         conn.bind((HOST, 0))
@@ -78,32 +82,54 @@ def main():
             raw_data, addr = conn.recvfrom(65535)
             ethernet_header = ethernet.Ethernet()
             ethernet_header.unpack(raw_data)
-            print('\nEthernet Frame:')
-            print(TAB_1 + 'Destination: {}, Source: {}, Protocol: {}'.format(get_mac_addr(ethernet_header.dest_mac), get_mac_addr(ethernet_header.src_mac), socket.htons(ethernet_header.eth_proto)))  
+            #print('\nEthernet Frame:')
+            #print('Destination: {}, Source: {}, Protocol: {}'.format(ethernet_header.dest_mac, ethernet_header.src_mac,ethernet_header.eth_proto)) 
 
-            if socket.htons(ethernet_header.eth_proto) == 8 or operating_system == 'Windows':
+            if ethernet_header.eth_proto == 8 or operating_system == 'Windows':
                 ip_header = ip.IP()
                 ip_header.unpack(raw_data[14:])
-                print(TAB_1 + 'IPv4 Packet:')
-                print(TAB_2 + 'Version: {}, Header Length: {}, TTL: {},'.format(ip_header.version, ip_header.ihl, ip_header.ttl))
-                print(TAB_2 + 'Protocol: {}, Source: {}, Destination: {}'.format(ip_header.protocol, ip_header.srcip, ip_header.dstip))
+                #print('IPv4 Packet:')
+                #print('Version: {}, Header Length: {}, TTL: {},'.format(ip_header.version, ip_header.len, ip_header.ttl))
+                #print('Protocol: {}, Source: {}, Destination: {}'.format(ip_header.protocol, ipv4(ip_header.src_ip), ipv4(ip_header.dst_ip)))                
 
-                if ip_header.protocol == 17:
+                if ip_header.protocol == 17 and ip_header.src_ip != '192.168.28.10':
                    udp_header = udp.UDP()
                    udp_header.unpack(raw_data[34:])
-                   print(TAB_1 + 'UDP Packet:')
-                   print(TAB_2 + 'Source Port: {}, Destination Port: {}, Size: {}, Control Field: {}'.format(udp_header.srcport, udp_header.dstport, udp_header.len, hexConvert(udp_header.control)))
+                   #print('UDP Packet:')
+                   #print('Source Port: {}, Destination Port: {}, Size: {}, Control Field: {}'.format(udp_header.src_port, udp_header.dst_port, udp_header.len, hexConvert(udp_header.control)))                   
+                   donestamp = time.time()
+                   #print("donestamp",donestamp)
+                   data = len(raw_data)
+                   #print(data)
+                   totalbytes += data
+                   totalrcvs += 1
+                   totaltime = round((donestamp - timestamp),0)
+                   #print("totaltime",totaltime)
+                   #print("totalrcvs",totalrcvs)
+                   rate = round((((totalbytes* 8)/(donestamp - timestamp))/1000),3)
+                   #print ("\nRcvd: %s bytes, %s total in %s s at %s kbps" % (data, totalbytes, donestamp - timestamp, rate))
 
                    if hexConvert(udp_header.control) == '11000000':
+                       INETX = True
                        inetx_header = inetx.INETX()
                        inetx_header.unpack(raw_data[42:])
-                       print(TAB_1 + 'iNET-X Packet:')
-                       print(TAB_2 + 'Stream ID: {}, Sequence No: {}, iNET-X Length: {}, PTP TimeStamp: {}'.format(hexConvert(inetx_header.streamid), inetx_header.sequence, inetx_header.packetlen, ptp(inetx_header.ptptime) ))
-
+                       #print('iNET-X Packet:')
+                       #print('Stream ID: {}, Sequence No: {}, iNET-X Length: {}, PTP TimeStamp: {}'.format(hexConvert(inetx_header.streamid), inetx_header.sequence, inetx_header.packetlen, ptp(inetx_header.ptptime) ))
+ 
                    elif hexConvert(udp_header.control) != '11000000':
                        iena_header = iena.IENA()
-                       iena_header.unpack(raw_data[42:])
-                       print(TAB_1 + 'IENA Packet:')
-                       print(TAB_2 + 'IENA Key: {},Size: {}, Sequence No: {},Time: {} '.format( iena_header.key, iena_header.size,  iena_header.sequence,  unix(iena_header.timestamp)))
-	 
+                       iena_header.unpack(raw_data[42:])          
+            if INETX == True:        
+                INETXpacket = {'type': 'INETX', 'id':hexConvert(inetx_header.streamid) , 'seq':inetx_header.sequence, 'src':ipv4(ip_header.src_ip),'dst':ipv4(ip_header.dst_ip),'size':udp_header.len,'time':ptp(inetx_header.ptptime),'drop':inetx_header.missedcount,'BR':inetx_header.bitRate(),}                     
+                packet_json = json.dumps(INETXpacket)
+                ttlBitrate = json.dumps({'ttlBR':rate,})
+                client.publish("Packet", packet_json)
+                client.publish("ttlBitrate",ttlBitrate)
+            else:
+                IENApacket = {'type': 'IENA', 'id':hexConvert(iena_header.key) , 'seq':iena_header.sequence, 'src':ipv4(ip_header.src_ip),'dst':ipv4(ip_header.dst_ip),'size':udp_header.len,'time':unix(iena_header.timeHi,iena_header.timeLo),'drop':iena_header.missedcount,'BR':iena_header.bitRate(),}                     
+                packet_json = json.dumps(IENApacket)
+                ttlBitrate = json.dumps({'ttlBR':rate,})
+                client.publish("Packet", packet_json)
+                client.publish("ttlBitrate",ttlBitrate)                    
 main()
+ 
