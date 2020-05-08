@@ -31,15 +31,14 @@ $(document).ready(function(){
             tr.append("<td>" + (readings['dst'])+"</td>");
             tr.append("<td>" + (readings['size'])+"</td>");
             tr.append("<td>" + (readings['BR'])+"</td>");
-            tr.append("<td>" + (readings['drop'])+"</td>");
         
             $('table').prepend(tr); 
     }
 
     
   
-    const CLIENTID1 = 'ttlBitrateClient';
-    const TOPIC1 = 'ttlBitrate/#'
+    const CLIENTID1 = 'ttlClient';
+    const TOPIC1 = 'ttl/#'
     client1 = new Paho.MQTT.Client(BROKER, PORT, CLIENTID1);
     client1.connect({onSuccess:onConnect1});
     client1.onMessageArrived = onMessageArrived1;
@@ -54,7 +53,9 @@ $(document).ready(function(){
     function onMessageArrived1(message) {
         /*console.log("onMessageArrived:"+message.payloadString);*/
         let readings = JSON.parse(message.payloadString);
-        $('#ttlbR').text(readings['ttlBR']);                
+        $('#ttlbR').text(readings['ttlBR']);
+        $('#pktNo').text(readings['pktNo']);
+        $('#drop').text(readings['drop']);                  
     }
     
     

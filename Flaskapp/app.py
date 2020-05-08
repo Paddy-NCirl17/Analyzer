@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import render_template
+from flask import redirect
 from flask_mqtt import Mqtt
 from flask_bootstrap import Bootstrap
 from flask_socketio import SocketIO
@@ -21,7 +22,7 @@ app.config['MQTT_BROKER_PORT'] = 1883  # default port for non-tls connection
 app.config['MQTT_KEEPALIVE'] = 5  # set the time interval for sending a ping to the broker to 5 seconds
 app.config['MQTT_TLS_ENABLED'] = False  # set TLS to disabled for testing purposes
 
-MQTT_TOPIC = [("Packet", 0),("ttlBitrate",0)]
+MQTT_TOPIC = [("Packet", 0),("ttl",0)]
 mqtt = Mqtt(app)
 socketio = SocketIO(app)
 bootstrap = Bootstrap(app)
@@ -52,12 +53,13 @@ def index():
 @app.route("/Start")    
 def run():
     subprocess.call(["sudo","python3","/home/pi/Analyzer/Packet_Analyser.py"])
-    print("Done")
+    return redirect('/')
 
 @app.route("/Stop")    
 def stop():
-    subprocess.call(["pkill" ,"-f", "Packet_Analyser.py"])
-    print("Done")
+    subprocess.call(["sudo","pkill" ,"-f", "Packet_Analyser.py"])
+    time.sleep(300)
+    return render_template('index.html')
      
     
 if __name__ == "__main__":

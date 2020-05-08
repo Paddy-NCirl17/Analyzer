@@ -25,15 +25,34 @@
     <div class="container-fluid">
         <div class="jumbotron">
           <div class='row'>
-          <div class='col-sm-12 col-md-9'>
+          <div class='col-sm-12 col-md-3'>
+            <form action="" method="post">
             <a class="btn btn-success btn-lg" href="/Start" role="button">Start</a>
             <a class="btn btn-danger btn-lg" href="/Stop" role="button">Stop</a>
+            </form>
           </div>
+          <div class='col-sm-12 col-md-3'>
+            <div class="card">
+              <span class ="title">Dropped</span>
+              <span class ="display">
+              <span id="drop">--</span>
+              </span>
+            </div>            
+          </div>            
           <div class='col-sm-12 col-md-3'>
             <div class="card">
               <span class ="title">Total Bitrate</span>
               <span class ="display">
-              <span id="ttlbR"></span>
+              <span id="ttlbR">--</span>
+              <span class ="title">Kbps</span> 
+              </span>
+            </div>            
+          </div>         
+          <div class='col-sm-12 col-md-3'>
+            <div class="card">
+              <span class ="title">Total Packets</span>
+              <span class ="display">
+              <span id="pktNo">--</span>
               </span>
             </div>            
           </div>
@@ -51,7 +70,6 @@
               <th scope="col">Destination</th>
               <th scope="col">Length</th>
               <th scope="col">Bitrate</th>
-              <th scope="col">Dropped</th>
             </tr>
           </thead>
         </table>

@@ -105,7 +105,7 @@ def main():
                    totalrcvs += 1
                    totaltime = round((donestamp - timestamp),0)
                    #print("totaltime",totaltime)
-                   #print("totalrcvs",totalrcvs)
+                   print("totalrcvs",totalrcvs)
                    rate = round((((totalbytes* 8)/(donestamp - timestamp))/1000),3)
                    #print ("\nRcvd: %s bytes, %s total in %s s at %s kbps" % (data, totalbytes, donestamp - timestamp, rate))
 
@@ -120,16 +120,16 @@ def main():
                        iena_header = iena.IENA()
                        iena_header.unpack(raw_data[42:])          
             if INETX == True:        
-                INETXpacket = {'type': 'INETX', 'id':hexConvert(inetx_header.streamid) , 'seq':inetx_header.sequence, 'src':ipv4(ip_header.src_ip),'dst':ipv4(ip_header.dst_ip),'size':udp_header.len,'time':ptp(inetx_header.ptptime),'drop':inetx_header.missedcount,'BR':inetx_header.bitRate(),}                     
+                INETXpacket = {'type': 'INETX', 'id':hexConvert(inetx_header.streamid) , 'seq':inetx_header.sequence, 'src':ipv4(ip_header.src_ip),'dst':ipv4(ip_header.dst_ip),'size':udp_header.len,'time':ptp(inetx_header.ptptime),'BR':inetx_header.bitRate(),}                     
                 packet_json = json.dumps(INETXpacket)
-                ttlBitrate = json.dumps({'ttlBR':rate,})
+                ttl = json.dumps({'ttlBR':rate,'pktNo': totalrcvs,'drop':iena_header.missedcount,})
                 client.publish("Packet", packet_json)
-                client.publish("ttlBitrate",ttlBitrate)
+                client.publish("ttl",ttl)
             else:
-                IENApacket = {'type': 'IENA', 'id':hexConvert(iena_header.key) , 'seq':iena_header.sequence, 'src':ipv4(ip_header.src_ip),'dst':ipv4(ip_header.dst_ip),'size':udp_header.len,'time':unix(iena_header.timeHi,iena_header.timeLo),'drop':iena_header.missedcount,'BR':iena_header.bitRate(),}                     
+                IENApacket = {'type': 'IENA', 'id':hexConvert(iena_header.key) , 'seq':iena_header.sequence, 'src':ipv4(ip_header.src_ip),'dst':ipv4(ip_header.dst_ip),'size':udp_header.len,'time':unix(iena_header.timeHi,iena_header.timeLo),'BR':iena_header.bitRate(),}                     
                 packet_json = json.dumps(IENApacket)
-                ttlBitrate = json.dumps({'ttlBR':rate,})
+                ttl = json.dumps({'ttlBR':rate,'pktNo': totalrcvs,'drop':iena_header.missedcount,})
                 client.publish("Packet", packet_json)
-                client.publish("ttlBitrate",ttlBitrate)                    
+                client.publish("ttl",ttl)                    
 main()
  

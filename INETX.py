@@ -79,6 +79,7 @@ class INETX ():
                 self.missedtimes.append(self.ptptime)
                 self.missedpacket[self.packetnumber]=[previous_sequence[self.streamid]+1,self.sequence]
                 previous_sequence[self.streamid] = self.sequence
+                
                 #print(previous_sequence)
         else:
             previous_sequence[self.streamid] = self.sequence
