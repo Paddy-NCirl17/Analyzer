@@ -95,8 +95,8 @@ def main():
                 if ip_header.protocol == 17 and ip_header.src_ip != '192.168.28.10':
                    udp_header = udp.UDP()
                    udp_header.unpack(raw_data[34:])
-                   #print('UDP Packet:')
-                   #print('Source Port: {}, Destination Port: {}, Size: {}, Control Field: {}'.format(udp_header.src_port, udp_header.dst_port, udp_header.len, hexConvert(udp_header.control)))                   
+                   print('UDP Packet:')
+                   print('Source Port: {}, Destination Port: {}, Size: {}, Control Field: {}'.format(udp_header.src_port, udp_header.dst_port, udp_header.len, hexConvert(udp_header.control)))                   
                    donestamp = time.time()
                    #print("donestamp",donestamp)
                    data = len(raw_data)
@@ -118,11 +118,12 @@ def main():
  
                    elif hexConvert(udp_header.control) != '11000000':
                        iena_header = iena.IENA()
-                       iena_header.unpack(raw_data[42:])          
+                       iena_header.unpack(raw_data[42:]) 
+                                
             if INETX == True:        
                 INETXpacket = {'type': 'INETX', 'id':hexConvert(inetx_header.streamid) , 'seq':inetx_header.sequence, 'src':ipv4(ip_header.src_ip),'dst':ipv4(ip_header.dst_ip),'size':udp_header.len,'time':ptp(inetx_header.ptptime),'BR':inetx_header.bitRate(),}                     
                 packet_json = json.dumps(INETXpacket)
-                ttl = json.dumps({'ttlBR':rate,'pktNo': totalrcvs,'drop':iena_header.missedcount,})
+                ttl = json.dumps({'ttlBR':rate,'pktNo': totalrcvs,'drop':inetx_header.missedcount,})
                 client.publish("Packet", packet_json)
                 client.publish("ttl",ttl)
             else:
