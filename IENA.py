@@ -75,6 +75,9 @@ class IENA ():
                 self.missedcount += 1
                 self.missedtimes.append(self.timeHi)
                 self.missedpacket[self.packetnumber]=[previous_sequence[self.key]+1,self.sequence]
+                f=open("log.txt", "a+")
+                f.write(self.missedpacket[self.packetnumber], self.missedtimes)
+                f.close                
                 previous_sequence[self.key] = self.sequence
                 #print(previous_sequence)
         else:

@@ -42,7 +42,7 @@ $(document).ready(function(){
     client1 = new Paho.MQTT.Client(BROKER, PORT, CLIENTID1);
     client1.connect({onSuccess:onConnect1});
     client1.onMessageArrived = onMessageArrived1;
-    
+   
     // called when the client connects
     function onConnect1() {
         // Once a connection has been made, make a subscription and send a message.
@@ -55,9 +55,9 @@ $(document).ready(function(){
         let readings = JSON.parse(message.payloadString);
         $('#ttlbR').text(readings['ttlBR']);
         $('#pktNo').text(readings['pktNo']);
-        $('#drop').text(readings['drop']);                  
+        $('#drop').text(readings['drop']);                
     }
-    
-    
+       
+        
   })       
 

@@ -54,20 +54,18 @@ def unix(timeHi, timeLo):
                     
 
 def main():
-   # RASP_IP = "192.168.0.10"
-    #RASP_PORT = 5005
-    totalbytes = 0
+    
+    ## Define Variables ###
+    totalbytes = 0 
     timestamp = time.time()
     totaltime= 0
     totalrcvs = 0
-    INETX = False
-
+    INETX = False 
+## Find the current Host of the Analyzer ###
     operating_system = platform.system()
-    print (operating_system)
     HOST = socket.gethostbyname(socket.gethostname())
-    print (HOST)
     
-##socket for windows skips the Ethernet layer.   
+## Windows and Linux(Raspberry Pi) Bind differently to a Socket ###
     if operating_system == 'Windows':
         conn = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
         conn.bind((HOST, 0))
@@ -76,50 +74,38 @@ def main():
     else:
         conn = socket.socket(socket.AF_PACKET, socket.SOCK_RAW,socket.ntohs(3))
         conn.bind(('eth0', 0))	
-        
+
+##        
     while True:
         if operating_system == 'Linux':
             raw_data, addr = conn.recvfrom(65535)
             ethernet_header = ethernet.Ethernet()
             ethernet_header.unpack(raw_data)
-            #print('\nEthernet Frame:')
-            #print('Destination: {}, Source: {}, Protocol: {}'.format(ethernet_header.dest_mac, ethernet_header.src_mac,ethernet_header.eth_proto)) 
-
+            
+##socket for windows skips the Ethernet layer as this is not a requirement. ###  
             if ethernet_header.eth_proto == 8 or operating_system == 'Windows':
                 ip_header = ip.IP()
-                ip_header.unpack(raw_data[14:])
-                #print('IPv4 Packet:')
-                #print('Version: {}, Header Length: {}, TTL: {},'.format(ip_header.version, ip_header.len, ip_header.ttl))
-                #print('Protocol: {}, Source: {}, Destination: {}'.format(ip_header.protocol, ipv4(ip_header.src_ip), ipv4(ip_header.dst_ip)))                
+                ip_header.unpack(raw_data[14:])               
 
                 if ip_header.protocol == 17 and ip_header.src_ip != '192.168.28.10':
                    udp_header = udp.UDP()
-                   udp_header.unpack(raw_data[34:])
-                   print('UDP Packet:')
-                   print('Source Port: {}, Destination Port: {}, Size: {}, Control Field: {}'.format(udp_header.src_port, udp_header.dst_port, udp_header.len, hexConvert(udp_header.control)))                   
+                   udp_header.unpack(raw_data[34:])                  
                    donestamp = time.time()
-                   #print("donestamp",donestamp)
                    data = len(raw_data)
-                   #print(data)
                    totalbytes += data
                    totalrcvs += 1
                    totaltime = round((donestamp - timestamp),0)
-                   #print("totaltime",totaltime)
-                   print("totalrcvs",totalrcvs)
                    rate = round((((totalbytes* 8)/(donestamp - timestamp))/1000),3)
-                   #print ("\nRcvd: %s bytes, %s total in %s s at %s kbps" % (data, totalbytes, donestamp - timestamp, rate))
 
                    if hexConvert(udp_header.control) == '11000000':
                        INETX = True
                        inetx_header = inetx.INETX()
                        inetx_header.unpack(raw_data[42:])
-                       #print('iNET-X Packet:')
-                       #print('Stream ID: {}, Sequence No: {}, iNET-X Length: {}, PTP TimeStamp: {}'.format(hexConvert(inetx_header.streamid), inetx_header.sequence, inetx_header.packetlen, ptp(inetx_header.ptptime) ))
  
                    elif hexConvert(udp_header.control) != '11000000':
                        iena_header = iena.IENA()
                        iena_header.unpack(raw_data[42:]) 
-                                
+ ## publish contents of headers to MQTT ##                               
             if INETX == True:        
                 INETXpacket = {'type': 'INETX', 'id':hexConvert(inetx_header.streamid) , 'seq':inetx_header.sequence, 'src':ipv4(ip_header.src_ip),'dst':ipv4(ip_header.dst_ip),'size':udp_header.len,'time':ptp(inetx_header.ptptime),'BR':inetx_header.bitRate(),}                     
                 packet_json = json.dumps(INETXpacket)

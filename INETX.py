@@ -78,6 +78,9 @@ class INETX ():
                 self.missedcount += 1
                 self.missedtimes.append(self.ptptime)
                 self.missedpacket[self.packetnumber]=[previous_sequence[self.streamid]+1,self.sequence]
+                f=open("log.txt", "a+")
+                f.write(self.missedpacket[self.packetnumber], self.missedtimes)
+                f.close
                 previous_sequence[self.streamid] = self.sequence
                 
                 #print(previous_sequence)
